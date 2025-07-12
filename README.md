@@ -83,6 +83,16 @@ SkillSwap Arena is a revolutionary skill exchange platform that gamifies the lea
 
 ---
 
+# SkillSwap Arena 🎮
+
+> **A gamified skill exchange platform where warriors level up by teaching and learning from each other**
+
+🌐 **Live Demo:** [odoo-2025-adityakurapatis-projects.vercel.app](https://odoo-2025-adityakurapatis-projects.vercel.app/)
+
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+...
+
+
 ## 🚀 Getting Started
 
 ### Prerequisites
