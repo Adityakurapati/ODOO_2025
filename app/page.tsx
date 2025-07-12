@@ -47,7 +47,10 @@ import {
   Rocket,
   Shield,
   Heart,
+  AlertTriangle,
 } from "lucide-react"
+import { AdminStatsCard } from "@/components/ui/admin-stats-card"
+import { ReportCard } from "@/components/ui/report-card"
 
 // Mock data with gamification elements
 const mockUsers = [
@@ -156,6 +159,42 @@ export default function SkillSwapPlatform() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [swapMessage, setSwapMessage] = useState("")
 
+  const [adminStats, setAdminStats] = useState({
+    totalUsers: 1247,
+    activeSwaps: 89,
+    pendingReports: 12,
+    bannedUsers: 3,
+    totalSkills: 456,
+    platformMessages: 2,
+  })
+
+  const [reportedContent, setReportedContent] = useState([
+    {
+      id: 1,
+      type: "skill",
+      content: "I can teach you how to hack into systems",
+      reportedBy: "Sarah Chen",
+      reportedUser: "BadActor123",
+      reason: "Inappropriate content",
+      status: "pending",
+      timestamp: "2024-01-15 14:30",
+    },
+    {
+      id: 2,
+      type: "profile",
+      content: "Selling fake certificates and degrees",
+      reportedBy: "Mike Johnson",
+      reportedUser: "FakeDealer",
+      reason: "Spam/Scam",
+      status: "pending",
+      timestamp: "2024-01-15 12:15",
+    },
+  ])
+
+  const [platformMessage, setPlatformMessage] = useState("")
+  const [messageType, setMessageType] = useState("info")
+  const [selectedUsers, setSelectedUsers] = useState([])
+
   const filteredUsers = mockUsers.filter(
     (user) =>
       user.skillsOffered.some((skill) => skill.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -223,6 +262,43 @@ export default function SkillSwapPlatform() {
 
   const xpProgress = (profile.xp / profile.nextLevelXp) * 100
 
+  const handleReportAction = (reportId: number, action: "approve" | "reject") => {
+    setReportedContent((prev) =>
+      prev.map((report) =>
+        report.id === reportId ? { ...report, status: action === "approve" ? "resolved" : "dismissed" } : report,
+      ),
+    )
+  }
+
+  const banUser = (userId: string) => {
+    setAdminStats((prev) => ({ ...prev, bannedUsers: prev.bannedUsers + 1 }))
+    // Remove user from mockUsers or mark as banned
+  }
+
+  const sendPlatformMessage = () => {
+    if (platformMessage.trim()) {
+      setAdminStats((prev) => ({ ...prev, platformMessages: prev.platformMessages + 1 }))
+      setPlatformMessage("")
+      // In real app, this would send to all users
+    }
+  }
+
+  const downloadReport = (reportType: string) => {
+    // Mock download functionality
+    const data = {
+      userActivity: { totalUsers: adminStats.totalUsers, activeUsers: 892 },
+      swapStats: { totalSwaps: 2341, successRate: 87.3 },
+      feedbackLogs: { totalFeedback: 1456, averageRating: 4.6 },
+    }
+
+    const blob = new Blob([JSON.stringify(data[reportType], null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${reportType}-report.json`
+    a.click()
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
       <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-20" />
@@ -265,7 +341,7 @@ export default function SkillSwapPlatform() {
           </header>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-800/50 backdrop-blur-sm">
+            <TabsList className="grid w-full grid-cols-5 bg-gray-800/50 backdrop-blur-sm">
               <TabsTrigger
                 value="dashboard"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-500"
@@ -293,6 +369,13 @@ export default function SkillSwapPlatform() {
               >
                 <User className="h-4 w-4 mr-2" />
                 Profile
+              </TabsTrigger>
+              <TabsTrigger
+                value="admin"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-400 data-[state=active]:to-purple-500"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Admin
               </TabsTrigger>
             </TabsList>
 
@@ -957,6 +1040,242 @@ export default function SkillSwapPlatform() {
                     <Heart className="h-4 w-4 mr-2" />
                     Save Warrior Profile
                   </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="admin" className="space-y-6">
+              {/* Admin Header */}
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="p-3 bg-gradient-to-r from-red-400 to-purple-500 rounded-full mr-4">
+                    <Shield className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-red-400 to-purple-500 bg-clip-text text-transparent">
+                      Admin Control Center
+                    </h2>
+                    <p className="text-gray-400 mt-2">Monitor, manage, and maintain platform integrity</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Admin Stats */}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <AdminStatsCard
+                  title="Total Users"
+                  value={adminStats.totalUsers}
+                  icon={<Users className="h-4 w-4" />}
+                  trend="+12% this month"
+                  color="from-blue-500/20 to-cyan-600/20 border-blue-500/30"
+                  badge="Active"
+                />
+                <AdminStatsCard
+                  title="Active Swaps"
+                  value={adminStats.activeSwaps}
+                  icon={<Zap className="h-4 w-4" />}
+                  trend="+5% this week"
+                  color="from-green-500/20 to-emerald-600/20 border-green-500/30"
+                  badge="Live"
+                />
+                <AdminStatsCard
+                  title="Pending Reports"
+                  value={adminStats.pendingReports}
+                  icon={<AlertTriangle className="h-4 w-4" />}
+                  trend="Needs attention"
+                  color="from-yellow-500/20 to-orange-600/20 border-yellow-500/30"
+                  badge="Urgent"
+                />
+                <AdminStatsCard
+                  title="Banned Users"
+                  value={adminStats.bannedUsers}
+                  icon={<X className="h-4 w-4" />}
+                  trend="Last 30 days"
+                  color="from-red-500/20 to-pink-600/20 border-red-500/30"
+                  badge="Blocked"
+                />
+              </div>
+
+              {/* Content Moderation */}
+              <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <AlertTriangle className="h-5 w-5 mr-2 text-red-400" />
+                    Content Moderation
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Review reported content and take appropriate actions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {reportedContent.map((report) => (
+                    <ReportCard key={report.id} report={report} onAction={handleReportAction} onBanUser={banUser} />
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Swap Monitoring */}
+              <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Target className="h-5 w-5 mr-2 text-blue-400" />
+                    Swap Monitoring
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Monitor all platform swaps and their statuses
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Card className="bg-green-500/10 border-green-500/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-green-400 font-medium">Completed Swaps</p>
+                            <p className="text-2xl font-bold text-white">2,341</p>
+                          </div>
+                          <Check className="h-8 w-8 text-green-400" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-yellow-500/10 border-yellow-500/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-yellow-400 font-medium">Pending Swaps</p>
+                            <p className="text-2xl font-bold text-white">{adminStats.activeSwaps}</p>
+                          </div>
+                          <Clock className="h-8 w-8 text-yellow-400" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-red-500/10 border-red-500/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-red-400 font-medium">Cancelled Swaps</p>
+                            <p className="text-2xl font-bold text-white">156</p>
+                          </div>
+                          <X className="h-8 w-8 text-red-400" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Platform Messaging */}
+              <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <MessageSquare className="h-5 w-5 mr-2 text-purple-400" />
+                    Platform Messaging
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Send announcements and alerts to all users
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <Label className="text-purple-400">Message Type</Label>
+                      <Select value={messageType} onValueChange={setMessageType}>
+                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-700 border-gray-600">
+                          <SelectItem value="info" className="text-white">
+                            📢 Information
+                          </SelectItem>
+                          <SelectItem value="warning" className="text-white">
+                            ⚠️ Warning
+                          </SelectItem>
+                          <SelectItem value="maintenance" className="text-white">
+                            🔧 Maintenance
+                          </SelectItem>
+                          <SelectItem value="feature" className="text-white">
+                            ✨ New Feature
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-blue-400">Target Audience</Label>
+                      <Select defaultValue="all">
+                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-700 border-gray-600">
+                          <SelectItem value="all" className="text-white">
+                            All Users
+                          </SelectItem>
+                          <SelectItem value="active" className="text-white">
+                            Active Users
+                          </SelectItem>
+                          <SelectItem value="premium" className="text-white">
+                            Premium Users
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-green-400">Message Content</Label>
+                    <Textarea
+                      placeholder="Enter your platform-wide message..."
+                      value={platformMessage}
+                      onChange={(e) => setPlatformMessage(e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white min-h-[100px]"
+                    />
+                  </div>
+                  <Button
+                    onClick={sendPlatformMessage}
+                    disabled={!platformMessage.trim()}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 glow-effect"
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Send Platform Message
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Reports & Analytics */}
+              <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <TrendingUp className="h-5 w-5 mr-2 text-green-400" />
+                    Reports & Analytics
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
+                    Download detailed reports and analytics data
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Button
+                      onClick={() => downloadReport("userActivity")}
+                      variant="outline"
+                      className="h-20 flex-col border-gray-600 hover:bg-gray-700 bg-transparent"
+                    >
+                      <Users className="h-6 w-6 mb-2 text-blue-400" />
+                      <span className="text-sm">User Activity Report</span>
+                    </Button>
+                    <Button
+                      onClick={() => downloadReport("swapStats")}
+                      variant="outline"
+                      className="h-20 flex-col border-gray-600 hover:bg-gray-700 bg-transparent"
+                    >
+                      <Zap className="h-6 w-6 mb-2 text-green-400" />
+                      <span className="text-sm">Swap Statistics</span>
+                    </Button>
+                    <Button
+                      onClick={() => downloadReport("feedbackLogs")}
+                      variant="outline"
+                      className="h-20 flex-col border-gray-600 hover:bg-gray-700 bg-transparent"
+                    >
+                      <Star className="h-6 w-6 mb-2 text-yellow-400" />
+                      <span className="text-sm">Feedback Logs</span>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
